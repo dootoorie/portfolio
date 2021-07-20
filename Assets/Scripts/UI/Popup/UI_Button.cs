@@ -64,10 +64,10 @@ public class UI_Button : UI_Popup
         GameObject go = GetImage((int)Images.ItemIcon).gameObject;
 
         //2021-07-17
-        AddUIEvent(go, (PointerEventData data) => { go.gameObject.transform.position = data.position; }, Define.UIEvent.Drag);
+        BindEvent(go, (PointerEventData data) => { go.gameObject.transform.position = data.position; }, Define.UIEvent.Drag);
 
         //버튼 클릭시 점수 상승. Extension 메소드를 사용하여 만들었음(Extension.cs) ,2021-07-17 
-        GetButton((int)Buttons.PointButton).gameObject.AddUIEvent(OnButtonClicked);
+        GetButton((int)Buttons.PointButton).gameObject.BindEvent(OnButtonClicked);
     }
 
 

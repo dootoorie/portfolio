@@ -27,7 +27,7 @@ public class UI_Inven_Item : UI_Base        //독립적으로 뜨는 팝업도 아니고, 하�
         Get<GameObject>((int)GameObjects.ItemNameText).GetComponent<Text>().text = _name;
 
         //ItemIcon이란 이름의 게임오브젝트 생성 + Image 컴포넌트를 가져와서, 아이템을 클릭 했을 때 {  } 속에 있는 것을 실행, 2021-07-19
-        Get<GameObject>((int)GameObjects.ItemIcon).AddUIEvent((PointerEventData) => { Debug.Log($"아이템 클릭! {_name}"); });
+        Get<GameObject>((int)GameObjects.ItemIcon).BindEvent((PointerEventData) => { Debug.Log($"아이템 클릭! {_name}"); });
     }
 
     //Text의 내용을 바꾸는 함수(= 아이템 이름), 2021-07-19

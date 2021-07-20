@@ -61,8 +61,27 @@ public class UIManager //MonoBehaviour 지워준다
             canvas.sortingOrder = 0;
         }
     }
-      
 
+    //아이템 만들기, 2021-07-19
+    public T MakeSubItem<T>(Transform parent = null, string name = null) where T : UI_Base
+    {
+        //만약 name을 받지 않았다면,
+        if (string.IsNullOrEmpty(name))
+        {
+            //<T>와 똑같은 이름을 사용하겠다는 뜻
+            name = typeof(T).Name;
+        }
+
+        //프리팹 만들기 : UI폴더/Popup폴더/
+        GameObject go = Managers.Resource.Instantiate($"UI/SubItem/{name}");
+
+        if (parent != null)
+        {
+            go.transform.SetParent(parent);
+        }
+
+        return Util.GetOrAddComponent<T>(go);
+    }
 
     //씬을 여는 함수
     //string name : 프리팹과 연관 -> Prefabs폴더/UI폴더/Popup폴더/UI_Button(프리팹파일 이름)을 건내주는 것임

@@ -27,7 +27,23 @@ public class ResourceManager //이 스크립트는 컴포넌트로 만들지 않을 예정이므로 �
         //원래 Instantiate할 때 앞에 안 붙였는데,
         //Object를 붙인 이유는 Instantiate만 있으면 12번째 줄을 재귀적으로 호출하려고 하니까
         //Object에 있는 Instantiate를 하라는 정확한 코드
-        return Object.Instantiate(prefab, parent);
+        //return Object.Instantiate(prefab, parent);
+
+        //하이어라키에 프리팹 생성. 그리고 게임오브젝트 go에 저장, 2021-07-19
+        GameObject go = Object.Instantiate(prefab, parent);
+
+        //Clone이라는 문자열이 있는지 찾아서 index 변수에 저장, 2021-07-19
+        int index = go.name.IndexOf("(Clone)");
+
+        //만약 index가 있으면, 2021-07-19
+        if (index > 0)
+        {
+            //이름을 바꿔치기(Substring함수는 0번~ index번까지의 문자열을 잘라버릴 수 있음)(즉 Clone을 잘라버림), 2021-07-19
+            go.name = go.name.Substring(0, index);
+            //그리고 반드시 go.name 으로 다시 저장해야 한다, 2021-07-19
+        }
+
+        return go;
     }
 
     public void Destroy(GameObject go)

@@ -35,15 +35,12 @@ public class UI_Inven : UI_Scene
 
         //실제 인벤토리 정보를 참고해서
         for (int i = 0; i < 8; i++)
-        {
-            //프리팹 생성 (위치 : UI폴더/Scene폴더/UI_Inven_Item 프리팹)
-            GameObject item = Managers.Resource.Instantiate("UI/Scene/UI_Inven_Item");
-
-            //연결(= 부모님 지정)
-            item.transform.SetParent(gridPanel.transform);
+        {            
+            //프리팹 생성 (위치 : UI폴더/Scene폴더/UI_Inven_Item 프리팹), 매개변수는 부모
+            GameObject item = Managers.UI.MakeSubItem<UI_Inven_Item>(gridPanel.transform).gameObject;
 
             //UI_Inven_Item.cs 컴포넌트를 UI_Inven_Item 프리팹에 붙이기, 붙인 다음, 인스턴스화한 invenItem변수에 붙이기
-            UI_Inven_Item invenItem = Util.GetOrAddComponent<UI_Inven_Item>(item);
+            UI_Inven_Item invenItem = item.GetOrAddComponent<UI_Inven_Item>();
 
             //UI_Inven_Item.cs의 SetInfo함수를 이용하여 Text 내용 적기(= 아이템 이름)
             invenItem.SetInfo($"집행검{i}번");

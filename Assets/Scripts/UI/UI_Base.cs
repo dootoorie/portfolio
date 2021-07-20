@@ -56,10 +56,10 @@ public abstract class UI_Base : MonoBehaviour
     {
         UnityEngine.Object[] arr_objects = null;
 
-        //꺼내는데 실패하면
+        //꺼내는데 실패하면, 2021-07-16
         if (dic_objects.TryGetValue(typeof(T), out arr_objects) == false)
         {
-            //없다는 의미로 null
+            //없다는 의미로 null, 2021-07-16
             return null;
         }
 
@@ -67,16 +67,26 @@ public abstract class UI_Base : MonoBehaviour
         return arr_objects[idx] as T;
     }
 
+    //2021-07-19
+    protected GameObject GetObject(int idx)
+    {
+        return Get<GameObject>(idx);
+    }
+
+
+    //2021-07-16
     protected Text GetText(int idx)
     {
         return Get<Text>(idx);
     }
 
+    //2021-07-16
     protected Button GetButton(int idx)
     {
         return Get<Button>(idx);
     }
 
+    //2021-07-16
     protected Image GetImage(int idx)
     {
         return Get<Image>(idx);
@@ -84,7 +94,7 @@ public abstract class UI_Base : MonoBehaviour
 
 
     //2021-07-17
-    public static void AddUIEvent(GameObject go, Action<PointerEventData> action, Define.UIEvent type = Define.UIEvent.Click)
+    public static void BindEvent(GameObject go, Action<PointerEventData> action, Define.UIEvent type = Define.UIEvent.Click)
     {
         // UI_EventHandler.cs 컴포넌트를 추가
         UI_EventHandler evt = Util.GetOrAddComponent<UI_EventHandler>(go);
