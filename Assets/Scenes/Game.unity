@@ -170,6 +170,14 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1.85, z: 1}
   m_Center: {x: 0, y: 0.95, z: 0}
+--- !u!81 &147337139
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 147337133}
+  m_Enabled: 1
 --- !u!1 &210349637
 GameObject:
   m_ObjectHideFlags: 0
@@ -334,7 +342,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &963194227
 Camera:
   m_ObjectHideFlags: 0
@@ -694,7 +702,7 @@ Transform:
   m_GameObject: {fileID: 1209126683}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: -0.5, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_LocalScale: {x: 5, y: 5, z: 5}
   m_Children: []
   m_Father: {fileID: 1108383357}
   m_RootOrder: 0
@@ -1007,8 +1015,8 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_PlayOnAwake: 1
-  m_Volume: 1
+  m_PlayOnAwake: 0
+  m_Volume: 0.669
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -1016,8 +1024,8 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 500
+  MinDistance: 2
+  MaxDistance: 8
   Pan2D: 0
   rolloffMode: 0
   BypassEffects: 0
@@ -1052,7 +1060,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -1120,5 +1128,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5b25630b6346fd4eb2398d577834db7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  audioClip: {fileID: 8300000, guid: 4d194a5688aaf6c41976082c5c4e2857, type: 3}
+  audioClip: {fileID: 8300000, guid: 601febb6f5a07b14d8ebefa0c1bd6bfc, type: 3}
   audioClip2: {fileID: 8300000, guid: e3517f01f3767514ea79a6beea75ccb4, type: 3}

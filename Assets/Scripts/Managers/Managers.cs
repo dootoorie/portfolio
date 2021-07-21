@@ -20,10 +20,13 @@ public class Managers : MonoBehaviour
     }
 
     //새로 만든 InpuManager.cs 추가하여 인스턴스화, 2021-06-30
-    InputManager input = new InputManager();
+    InputManager _input = new InputManager();
+
+    //새로 만든 PoolManager.cs 추가하여 인스턴스화, 2021-07-21
+    PoolManager _pool = new PoolManager();
 
     //새로 만든 Resourcemanager.cs 추가하여 인스턴스화, 2021-06-30
-    ResourceManager resource = new ResourceManager();
+    ResourceManager _resource = new ResourceManager();
 
     //새로 만든 SceneManagerEx.cs 추가하여 인스턴스화, 2021-07-20
     SceneManagerEx _scene = new SceneManagerEx();
@@ -32,7 +35,7 @@ public class Managers : MonoBehaviour
     SoundManager _sound = new SoundManager();
 
     //새로 만든 UIManager.cs 추가하여 인스턴스화, 2021-07-18
-    UIManager ui = new UIManager();
+    UIManager _ui = new UIManager();
 
     //InputManager.cs를 Input이라는 이름으로 불러온다
     //이제부터 실제 InputManager.cs를 사용하고 싶으면, Managers.Input을 통해 불러오면 된다., 2021-06-30
@@ -40,7 +43,17 @@ public class Managers : MonoBehaviour
     { 
         get 
         { 
-            return Instance.input; 
+            return Instance._input; 
+        }
+    }
+
+    //PoolManager.cs를 Resource라는 이름으로 불러온다.
+    //이제부터 실제 PoolManager.cs를 사용하고 싶으면, Managers.Pool을 통해 불러오면 된다, 2021-07-21
+    public static PoolManager Pool
+    {
+        get
+        {
+            return Instance._pool;
         }
     }
 
@@ -50,7 +63,7 @@ public class Managers : MonoBehaviour
     { 
         get 
         { 
-            return Instance.resource; 
+            return Instance._resource; 
         } 
     }
 
@@ -80,7 +93,7 @@ public class Managers : MonoBehaviour
     { 
         get 
         { 
-            return Instance.ui;
+            return Instance._ui;
         } 
     }
 
@@ -105,8 +118,8 @@ public class Managers : MonoBehaviour
 
     void Update()
     {
-        //결국, 마우스 키 입력하던 부분은 Managers.cs의 _input.OnUpdate()에서 해주게 된다., 2021-06-30
-        input.OnUpdate();
+        //결국, 마우스 키 입력하던 부분은 Managers.cs의 _input.OnUpdate()에서 해주게 된다, 2021-06-30
+        _input.OnUpdate();
     }
 
     
@@ -142,5 +155,21 @@ public class Managers : MonoBehaviour
             //SoundManager.cs의 Init()함수를 호출, 2021-07-20
             s_instance._sound.Init();
         }
+    }
+
+    //씬이 바뀔 때, 메모리 관리를 위해, 보관하던 audio 관련 데이터를 날려주기, 2021-07-21
+    public static void Clear()
+    {
+        //InputManager.cs 의 Clear()함수
+        Input.Clear();
+
+        //SoundManager.cs 의 Clear()함수
+        Sound.Clear();
+
+        //SceneManagerEx.cs 의 Clear() 함수
+        Scene.Clear();
+
+        //UIManager.cs 의 Clear()함수
+        UI.Clear();
     }
 }

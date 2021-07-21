@@ -64,4 +64,12 @@ public class InputManager	//이 스크립트는 컴포넌트로 만들지 않을 예정이므로 일반
             }
         }        
     }
+
+    //씬 이동할 때, 메모리 관리를 위해, KeyAction과 MouseAction과 관련된 데이터 날려주기, 2021-07-21
+    public void Clear()
+    {
+        KeyAction = null;
+
+        MouseAction = null;
+    }
 }

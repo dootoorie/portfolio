@@ -13,6 +13,7 @@ public class ResourceManager //ÀÌ ½ºÅ©¸³Æ®´Â ÄÄÆ÷³ÍÆ®·Î ¸¸µéÁö ¾ÊÀ» ¿¹Á¤ÀÌ¹Ç·Î À
 
     public GameObject Instantiate(string path, Transform parent = null)
     {
+        // 1. original ÀÌ¹Ì µé°í ÀÖÀ¸¸é ¹Ù·Î »ç¿ë
         //Load¸¦ »ç¿ëÇØ prefab¿¡ path¿¡ ÇØ´çÇÏ´Â GameObejct Å¸ÀÔÀÇ ¿¡¼ÂÀ» ÇÒ´çÇÑ´Ù
         GameObject prefab = Load<GameObject>($"Prefabs/{path}");
 
@@ -29,19 +30,12 @@ public class ResourceManager //ÀÌ ½ºÅ©¸³Æ®´Â ÄÄÆ÷³ÍÆ®·Î ¸¸µéÁö ¾ÊÀ» ¿¹Á¤ÀÌ¹Ç·Î À
         //Object¿¡ ÀÖ´Â Instantiate¸¦ ÇÏ¶ó´Â Á¤È®ÇÑ ÄÚµå
         //return Object.Instantiate(prefab, parent);
 
+        // 2. È¤½Ã Pooling µÈ ¾Ö°¡ ÀÖÀ»±î?
         //ÇÏÀÌ¾î¶óÅ°¿¡ ÇÁ¸®ÆÕ »ý¼º. ±×¸®°í °ÔÀÓ¿ÀºêÁ§Æ® go¿¡ ÀúÀå, 2021-07-19
         GameObject go = Object.Instantiate(prefab, parent);
 
-        //CloneÀÌ¶ó´Â ¹®ÀÚ¿­ÀÌ ÀÖ´ÂÁö Ã£¾Æ¼­ index º¯¼ö¿¡ ÀúÀå, 2021-07-19
-        int index = go.name.IndexOf("(Clone)");
-
-        //¸¸¾à index°¡ ÀÖÀ¸¸é, 2021-07-19
-        if (index > 0)
-        {
-            //ÀÌ¸§À» ¹Ù²ãÄ¡±â(SubstringÇÔ¼ö´Â 0¹ø~ index¹ø±îÁöÀÇ ¹®ÀÚ¿­À» Àß¶ó¹ö¸± ¼ö ÀÖÀ½)(Áï CloneÀ» Àß¶ó¹ö¸²), 2021-07-19
-            go.name = go.name.Substring(0, index);
-            //±×¸®°í ¹Ýµå½Ã go.name À¸·Î ´Ù½Ã ÀúÀåÇØ¾ß ÇÑ´Ù, 2021-07-19
-        }
+        //¿øº»À» º¹»çÇÑ »óÅÂ, 201-07-21
+        go.name = prefab.name;
 
         return go;
     }
@@ -52,6 +46,8 @@ public class ResourceManager //ÀÌ ½ºÅ©¸³Æ®´Â ÄÄÆ÷³ÍÆ®·Î ¸¸µéÁö ¾ÊÀ» ¿¹Á¤ÀÌ¹Ç·Î À
         {
             return;
         }
+
+        // ¸¸¾à¿¡ PoolingÀÌ ÇÊ¿äÇÑ ¾ÆÀÌ¶ó¸é -> PoolManager ÇÑÅ× À§Å¹
 
         Object.Destroy(go);
     }

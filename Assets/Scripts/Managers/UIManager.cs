@@ -199,4 +199,14 @@ public class UIManager //MonoBehaviour 지워준다
             ClosePopupUI();
         }
     }
+
+    //메모리 관리를 위해 데이터 날려주기, 2021-07-21
+    public void Clear()
+    {
+        //Stack<UI_Popup>을 날려주는 함수는 이미 만들어놨으니 여기 추가
+        CloseAllPopupUI();
+
+        //UI_Scene도 날려주자
+        _sceneUI = null;
+    }
 }

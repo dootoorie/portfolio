@@ -18,8 +18,8 @@ public class SceneManagerEx     //MonoBehaviour 삭제
     //여기서는 Define.Scene type으로, 우리가 사용 할 Scene 목록들을 enum 으로 관리하고 있으니까
     public void LoadScene(Define.Scene type)
     {
-        //현재 사용하고 있는 Scene을 날린 후,
-        CurrentScene.Clear();
+        //불필요한 메모리 전부 날리기, 2021-07-21
+        Managers.Clear();
 
         //다음 씬으로 이동
         SceneManager.LoadScene(GetSceneName(type));     //Login, Game 등등.. => SceneManager.LoadScene(Game) 처럼
@@ -34,5 +34,11 @@ public class SceneManagerEx     //MonoBehaviour 삭제
         string name = System.Enum.GetName(typeof(Define.Scene), type);
         
         return name;
+    }
+
+    //데이터 관리를 위해, 2021-07-21
+    public void Clear()
+    {        
+        CurrentScene.Clear();
     }
 }
