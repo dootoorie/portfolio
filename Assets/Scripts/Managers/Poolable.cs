@@ -6,4 +6,6 @@ using UnityEngine;
 public class Poolable : MonoBehaviour
 {
     //아무런 기능이 없어도 된다.
+
+    public bool IsUsing;
 }

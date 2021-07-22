@@ -154,6 +154,9 @@ public class Managers : MonoBehaviour
             //Instance로 접근하면 안됨. 왜냐하면 Instance안에 이미 Init()이 있기 때문에 중복되어 무한루프 됨.
             //SoundManager.cs의 Init()함수를 호출, 2021-07-20
             s_instance._sound.Init();
+
+            //PoolManager.cs의 Init()함수를 호출, 2021-07-22
+            s_instance._pool.Init();
         }
     }
 
@@ -166,10 +169,13 @@ public class Managers : MonoBehaviour
         //SoundManager.cs 의 Clear()함수
         Sound.Clear();
 
-        //SceneManagerEx.cs 의 Clear() 함수
+        //SceneManagerEx.cs 의 Clear()함수
         Scene.Clear();
 
         //UIManager.cs 의 Clear()함수
         UI.Clear();
+
+        //PoolManager.cs의 Clear()함수 - 특이하게 다른 Clear()보다 뒤에 적어야한다(다른 곳에서 Pooling 한 프리팹을 사용하고 있을수도 있으므로)
+        Pool.Clear();
     }
 }

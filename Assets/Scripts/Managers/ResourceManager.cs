@@ -7,6 +7,38 @@ public class ResourceManager //ÀÌ ½ºÅ©¸³Æ®´Â ÄÄÆ÷³ÍÆ®·Î ¸¸µéÁö ¾ÊÀ» ¿¹Á¤ÀÌ¹Ç·Î À
     //where T : Object : ºÎ¸ð Å¬·¡½º°¡ ObjectÀÎ Å¸ÀÔ¸¸ ¹ÞÀ» ¼ö ÀÖµµ·Ï Á¦¾àÀ» °ÉÀ½
    public T Load<T>(string path) where T : Object
     {
+        //ÇÁ¸®ÆÕÀÎ °æ¿ì, originalÀ» Ã£¾Æº¸°í ¹Ù·Î ¹ÝÈ¯ÇÏÀÚ
+
+
+        //¸¸¾à T°¡ GameObject¿Í ÀÏÄ¡ÇÏ¸é ÇÁ¸®ÆÕÀÏ È®·üÀÌ ±²ÀåÈ÷ ³ôÀ»Å×´Ï Ã£¾Æº¸ÀÚ
+        if(typeof(T) == typeof(GameObject))
+        {
+            //ÇÁ¸®ÆÕÀÌ ÀúÀåµÇ¾î ÀÖ´Â °æ·Î¸¦ nameÀ¸·Î ÀúÀå
+            string name = path;
+
+            //°æ·Î °°Àº °æ¿ì, abc/Knight µî ½½·¡½¬(/)·Î µÇ¾î ÀÖ´Âµ¥, ¸Ç ¸¶Áö¸· ½½·¡½¬(/)¸¦ Ã£¾Æ¼­ ±× µÞºÎºÐ¸¸ ÃßÃâÇÏ¸é µÈ´Ù.
+            //¸Ç ¸¶Áö¸· ½½·¡½¬(/) Ã£´Â ¹æ¹ý : LastIndexOf()¸¦ ÀÌ¿ë
+            int index = name.LastIndexOf('/');
+
+            //¸¸¾à index°¡ Á¸ÀçÇÏ¸é,
+            if (index >= 0)
+            {
+                //Substring(int startIndex) : ¹®ÀÚ¿­ ÀÚ¸£±â.
+                //SubstringÀ» ÀÌ¿ëÇÏ¿© name ÀúÀå.
+                //index + 1À» ÇÑ ÀÌÀ¯´Â, index±îÁö°¡ ½½·¡½¬(/)ÀÌ¹Ç·Î, ½½·¡½¬(/) µÞ ºÎºÐºÎÅÍ Àß¶ó¼­ ÀúÀåÇÏ±â À§ÇØ
+                name = name.Substring(index + 1);
+            }
+
+            //¿îÁÁ°Ô GetOriginalÀ» Ã£¾ÒÀ¸¸é
+            GameObject go = Managers.Pool.GetOriginal(name);
+
+            //¹ÝÈ¯
+            if (go != null)
+            {
+                return go as T;
+            }
+        }
+
         //Resources Æú´õ¸¦ ½ÃÀÛ À§Ä¡·Î ÇÑ "path"¿¡ ÇØ´çÇÏ´Â T Å¸ÀÔÀÇ ¿¡¼Â ÆÄÀÏÀ» ºÒ·¯¿À°í ÀÌ¸¦ ¸®ÅÏÇÑ´Ù.
         return Resources.Load<T>(path);
     }
@@ -15,10 +47,10 @@ public class ResourceManager //ÀÌ ½ºÅ©¸³Æ®´Â ÄÄÆ÷³ÍÆ®·Î ¸¸µéÁö ¾ÊÀ» ¿¹Á¤ÀÌ¹Ç·Î À
     {
         // 1. original ÀÌ¹Ì µé°í ÀÖÀ¸¸é ¹Ù·Î »ç¿ë
         //Load¸¦ »ç¿ëÇØ prefab¿¡ path¿¡ ÇØ´çÇÏ´Â GameObejct Å¸ÀÔÀÇ ¿¡¼ÂÀ» ÇÒ´çÇÑ´Ù
-        GameObject prefab = Load<GameObject>($"Prefabs/{path}");
+        GameObject original = Load<GameObject>($"Prefabs/{path}");
 
-        //ÇÁ¸®ÆÕÀÌ ¾øÀ¸¸é
-        if (prefab == null)
+        //¸¸¾à ¿øº» ÇÁ¸®ÆÕÀÌ ¾øÀ¸¸é
+        if (original == null)
         {
             //¿À·ù ¸Þ½ÃÁö ³ªÅ¸³»±â({path} : °æ·ÎÆ÷ÇÔ)
             Debug.Log($"Failed to load prefab : {path}");
@@ -31,11 +63,18 @@ public class ResourceManager //ÀÌ ½ºÅ©¸³Æ®´Â ÄÄÆ÷³ÍÆ®·Î ¸¸µéÁö ¾ÊÀ» ¿¹Á¤ÀÌ¹Ç·Î À
         //return Object.Instantiate(prefab, parent);
 
         // 2. È¤½Ã Pooling µÈ ¾Ö°¡ ÀÖÀ»±î?
+
+        //¸¸¾à Poolable ÄÄÆ÷³ÍÆ®¸¦ °¡Áö°í ÀÖ´Â ¿øº» ÇÁ¸®ÆÕÀÌ ÀÖÀ¸¸é , (Poolable ÄÄÆ÷³ÍÆ®°¡ ¾øÀ¸¸é Pooling ÇÏ´Â ´ë»óÀÌ ¾Æ´Ï´Ï±î)
+        if (original.GetComponent<Poolable>() != null)
+        {
+            // Pop : ´ë±âÇÏ°í ÀÖ´Â Pooling µÈ ¿ÀºêÁ§Æ®°¡ ÀÖ´ÂÁö È®ÀÎÇÏ¿©, ÀÖÀ¸¸é ¹Ù·Î »ç¿ëÇÏ°Ú´Ù´Â ¶æ 
+            return Managers.Pool.Pop(original, parent).gameObject;
+        }
         //ÇÏÀÌ¾î¶óÅ°¿¡ ÇÁ¸®ÆÕ »ý¼º. ±×¸®°í °ÔÀÓ¿ÀºêÁ§Æ® go¿¡ ÀúÀå, 2021-07-19
-        GameObject go = Object.Instantiate(prefab, parent);
+        GameObject go = Object.Instantiate(original, parent);
 
         //¿øº»À» º¹»çÇÑ »óÅÂ, 201-07-21
-        go.name = prefab.name;
+        go.name = original.name;
 
         return go;
     }
@@ -49,6 +88,20 @@ public class ResourceManager //ÀÌ ½ºÅ©¸³Æ®´Â ÄÄÆ÷³ÍÆ®·Î ¸¸µéÁö ¾ÊÀ» ¿¹Á¤ÀÌ¹Ç·Î À
 
         // ¸¸¾à¿¡ PoolingÀÌ ÇÊ¿äÇÑ ¾ÆÀÌ¶ó¸é -> PoolManager ÇÑÅ× À§Å¹
 
+        //ÀÏ´Ü Pooling ´ë»óÀÎÁö È®ÀÎÇÏÀÚ(= Poolable ÄÄÆ÷³ÍÆ®¸¦ °¡Áö°í ÀÖ´ÂÁö È®ÀÎ)
+        Poolable poolable = go.GetComponent<Poolable>();
+
+        //Destroy ÇÏ±â Àü¿¡ Á¡°Ë
+        //¸¸¾à Pooling´ë»óÀÌ¸é,(= Poolable ÄÄÆ÷³ÍÆ®¸¦ °¡Áö°í ÀÖ´Ù¸é)
+        if (poolable != null)
+        {
+            // Push : Pooling µÈ ¿ÀºêÁ§Æ®¸¦ ´Ù »ç¿ëÇÑ ´ÙÀ½¿¡, ¹ÝÈ¯ÇÏ´Â ÀÛ¾÷
+            Managers.Pool.Push(poolable);
+
+            return;
+        }
+
+        //¸¸¾à Pooling ´ë»óÀÌ ¾Æ´Ï¶ó¸é, Destroy
         Object.Destroy(go);
     }
 

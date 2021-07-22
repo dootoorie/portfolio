@@ -11,6 +11,18 @@ public class LoginScene : BaseScene
         base.Init();
 
         SceneType = Define.Scene.Login;
+
+        //LoginScene -> GameScene 으로 이동하는 것을 구현 해본 적 있으니 여기다가 테스트, 2021-07-22
+        List<GameObject> list = new List<GameObject>();
+        for (int i = 0; i < 5; i++)
+        {
+            list.Add(Managers.Resource.Instantiate("ClazyRunner"));
+        }
+
+        foreach(GameObject obj in list)
+        {
+            Managers.Resource.Destroy(obj);
+        }    
     }
 
     private void Update()
