@@ -19,6 +19,9 @@ public class Managers : MonoBehaviour
         } 
     }
 
+    //새로 만든 DataManager.cs 추가하여 인스턴스화, 2021-07-23
+    DataManager _data = new DataManager();
+
     //새로 만든 InpuManager.cs 추가하여 인스턴스화, 2021-06-30
     InputManager _input = new InputManager();
 
@@ -37,8 +40,19 @@ public class Managers : MonoBehaviour
     //새로 만든 UIManager.cs 추가하여 인스턴스화, 2021-07-18
     UIManager _ui = new UIManager();
 
+
+    //DataManager.cs를 Data라는 이름으로 불러온다
+    //이제부터 실제 DataManager.cs를 사용하고 싶으면, Manager.Date를 통해 불러오면 된다, 2021-07-23
+    public static DataManager Data
+    {
+        get
+        {
+            return Instance._data;
+        }
+    }
+
     //InputManager.cs를 Input이라는 이름으로 불러온다
-    //이제부터 실제 InputManager.cs를 사용하고 싶으면, Managers.Input을 통해 불러오면 된다., 2021-06-30
+    //이제부터 실제 InputManager.cs를 사용하고 싶으면, Managers.Input을 통해 불러오면 된다, 2021-06-30
     public static InputManager Input
     { 
         get 
@@ -150,6 +164,9 @@ public class Managers : MonoBehaviour
             //Instance에 무언가를 반드시 넣어줘야 한다. Managers 스크립트 넣기, 2021-06-30
             s_instance = go.GetComponent<Managers>();
             //유니티를 실행해보면 @Managers가 없는 것에 당황하지 말자. DontDestroyOnLoad 왼쪽 화살표를 눌리면 아래에 @Managers가 생기는 것을 확인할 수 있다. , 2021-06-30       
+
+            //DataManager.cs의 Init()함수를 호출, 2021-07-23
+            s_instance._data.Init();
 
             //Instance로 접근하면 안됨. 왜냐하면 Instance안에 이미 Init()이 있기 때문에 중복되어 무한루프 됨.
             //SoundManager.cs의 Init()함수를 호출, 2021-07-20

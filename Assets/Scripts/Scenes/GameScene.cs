@@ -4,7 +4,7 @@ using UnityEngine;
 
 //2021-07-20
 public class GameScene : BaseScene
-{
+{    
     protected override void Init()
     {
         base.Init();
@@ -14,12 +14,8 @@ public class GameScene : BaseScene
         //Test.cs에서 쓰던 코드를 이제 당당하게 여기에서 쓰자
         Managers.UI.ShowSceneUI<UI_Inven>();
 
-        //테스트, 2021-07-22
-        for (int i = 0; i < 5; i++)
-        {
-            Managers.Resource.Instantiate("ClazyRunner");
-        }
-
+        //스탯 데이터, 2021-07-23
+        Dictionary<int, Stat> dict = Managers.Data.StatDict;
     }
 
     public override void Clear()
