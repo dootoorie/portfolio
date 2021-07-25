@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-    
+using UnityEngine.AI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -46,7 +46,7 @@ public class PlayerController : MonoBehaviour
         Vector3 dir = destinationPosition - transform.position;
 
         //아주 작은값으로 도착했는지 안 했는지 확인, 이 코드를 쓴 이유는 '방향 벡터 = 목적지 위치 - 현재 내 위치'를 해도 정확히 0이 나오지 않는 경우가 많다.(오차가 항상 있다) 2021-07-05
-        if (dir.magnitude < 0.0001f)
+        if (dir.magnitude < 0.1f)
         {           
             state = PlayerState.IDLE;
         }
@@ -54,14 +54,34 @@ public class PlayerController : MonoBehaviour
         //else이면, 아직 도착하지 않았다는 뜻, 2021-07-05
         else
         {
+
+            NavMeshAgent nma = gameObject.GetOrAddComponent<NavMeshAgent>();
+            
             //이동하는 값(speed * Time.deltaTime)이, 현재 이동해야 할 남은 거리(dir.magnitude <0.0001f)보다 작아야 한다는 것을 보장 해줘야 함, 2021-07-05
             //Clamp를 쓰면 최소값과 최대값 범위를 지정할 수 있다. 그래서 이동하는 값이 0(최소값) ~ 이동해야 할 남은 거리(최대값) 만큼의 범위로 정하였다, 2021-07-05
             float moveDist = Mathf.Clamp(speed * Time.deltaTime, 0, dir.magnitude);
 
-            //player가 이동할 때, 크기가 1로 정규화한 방향벡터에 이동속도를 곱한 값. 2021-07-05
-            transform.position = transform.position + dir.normalized * moveDist;
+            //NavMeshAgent를 이용해서 이동, 2021-07-25
+            nma.Move(dir.normalized * moveDist);
 
-            //Quaternion은 rotation함수라고 봐도 된다. 객체의 rotation에 Slerp(부드럽게 rotation)을 대입, 2021-07-05
+            //player가 이동할 때, 크기가 1로 정규화한 방향벡터에 이동속도를 곱한 값. 2021-07-05
+            //transform.position = transform.position + dir.normalized * moveDist;
+
+            //ray를 시각적으로 나타내기, 2021-07-25
+            Debug.DrawRay(transform.position + Vector3.up * 0.5f, dir.normalized, Color.red);
+            //만약에 1.0f 앞에 있는 벽에 레이가 닿으면,
+            //max distance : 1.0f (코 앞에 있는 벽만 체크), 2021-07-25
+            //transform.position + Vector3.up * 0.5f : 뒤에것을 더해주지않으면 발바닥에서 ray를 쏘지만, 더해주면 배꼽 위치에서 쏜다.
+            if (Physics.Raycast(transform.position + Vector3.up * 0.5f, dir, 1.0f, LayerMask.GetMask("Block")))
+            {
+                //상태는 IDLE로 바뀐다.
+                state = PlayerState.IDLE;
+
+                return;
+            }
+
+            
+                //Quaternion은 rotation함수라고 봐도 된다. 객체의 rotation에 Slerp(부드럽게 rotation)을 대입, 2021-07-05
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 10 * Time.deltaTime);
         }
 
