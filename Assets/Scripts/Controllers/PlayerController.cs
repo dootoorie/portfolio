@@ -5,12 +5,53 @@ using UnityEngine.AI;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField]
-    float speed = 10.0f;                //player 이동속도 , 2021-07-01        
-    //bool moveToDestination = false;     //player를 클릭한 곳으로 이동할지 말지 여부, 2021-07-05
-    Vector3 destinationPosition;        //player의 도착 위치, 2021-07-05
-    //float idle_run_ratio = 0;           //Blend Tree 변수(IDLE_RUN), 2021-07-07
+    PlayerStat _stat;                   //PlayerStat.cs의 PlayerStat 클래스를 변수로 인스턴스화, 2021-07-26
 
+    Vector3 destinationPosition;        //player의 도착 위치, 2021-07-05
+
+    Texture2D _attackIcon;              //마우스 커서 Attack 아이콘 이미지, 2021-07-26
+    Texture2D _handIcon;                //마우스 커서 Hand 아이콘 이미지, 2021-07-26
+
+
+    //마우스 커서 이미지가 자꾸 깜빡거리는 버그가 발생하여 enum값으로 설정하여 버그 고칠 것, 2021-07-26
+    enum CursorType
+    {
+        None,
+        Attack,
+        Hand,
+    }
+
+    //마우스 커서 이미지 초기값은 None, 2021-07-26
+    CursorType _cursorType = CursorType.None;
+
+    void Start()
+    {
+        //마우스 커서 Attack 이미지 로드, 2021-07-26
+        _attackIcon = Managers.Resource.Load<Texture2D>("Textures/Cursor/Attack");
+
+        //마우스 커서 Hnad 이미지 로드, 2021-07-26
+        _handIcon = Managers.Resource.Load<Texture2D>("Textures/Cursor/Hand");
+
+
+        //PlayerStat.cs의 PlayerStat클래스를 변수로 인스턴스화 한 _stat 에다가 PlayerStat.cs 컴포넌트를 붙인다, 2021-07-26
+        _stat = gameObject.GetComponent<PlayerStat>();
+
+
+        //Managers.Resource.Instantiate("UI/UI_Button");
+
+        //Managers.Input.KeyAction += OnKeyboard;을 호출할 때 OnKeyboard() 함수가 두 번 호출 되는것을 막기 위해서 미리 한 번 뺀다, 2021-07-01
+        Managers.Input.KeyAction -= OnKeyboard;
+
+        //키보드에 어떠한 키라도 누르면, InputManager한테 OnKeyboard라는 함수를 실행 요청, 2021-07-01
+        Managers.Input.KeyAction += OnKeyboard;
+        //이렇게 하면 Update()함수는 사용하지 않게 되고, 결국에는 키보드 입력 체크하는 것이 유일하게 된다, 2021-07-01
+
+        //Managers.Input.MouseAction += OnMouseClicked;을 호출할 때 OnMouseClicked() 함수가 두 번 호출 되는것을 막기 위해서 미리 한 번 뺀다, 2021-07-05
+        Managers.Input.MouseAction -= OnMouseEvent;
+
+        //마우스에 어떠한 키라도 누르면, InputManager한테 OnMouseClicked라는 함수를 실행 요청, 2021-07-05
+        Managers.Input.MouseAction += OnMouseEvent;
+    }
 
     public enum PlayerState
     {
@@ -18,8 +59,9 @@ public class PlayerController : MonoBehaviour
         MOVING,
         DIE,
         JUMPING,
-        CHANNELING,     //손을 들고 마법을 쓰고 있는 상태
+        CHANNELING,                     //손을 들고 마법을 쓰고 있는 상태
         FALLING,
+        SKILL
     }
 
     PlayerState state = PlayerState.IDLE;
@@ -54,12 +96,12 @@ public class PlayerController : MonoBehaviour
         //else이면, 아직 도착하지 않았다는 뜻, 2021-07-05
         else
         {
-
+            //NavMeshAgent를 변수로 인스턴스화 한 후, NavMeshAgent 컴포넌트를 부착하기, 2021-07-25
             NavMeshAgent nma = gameObject.GetOrAddComponent<NavMeshAgent>();
             
             //이동하는 값(speed * Time.deltaTime)이, 현재 이동해야 할 남은 거리(dir.magnitude <0.0001f)보다 작아야 한다는 것을 보장 해줘야 함, 2021-07-05
             //Clamp를 쓰면 최소값과 최대값 범위를 지정할 수 있다. 그래서 이동하는 값이 0(최소값) ~ 이동해야 할 남은 거리(최대값) 만큼의 범위로 정하였다, 2021-07-05
-            float moveDist = Mathf.Clamp(speed * Time.deltaTime, 0, dir.magnitude);
+            float moveDist = Mathf.Clamp(_stat.MoveSpeed * Time.deltaTime, 0, dir.magnitude);
 
             //NavMeshAgent를 이용해서 이동, 2021-07-25
             nma.Move(dir.normalized * moveDist);
@@ -69,52 +111,42 @@ public class PlayerController : MonoBehaviour
 
             //ray를 시각적으로 나타내기, 2021-07-25
             Debug.DrawRay(transform.position + Vector3.up * 0.5f, dir.normalized, Color.red);
+            
             //만약에 1.0f 앞에 있는 벽에 레이가 닿으면,
             //max distance : 1.0f (코 앞에 있는 벽만 체크), 2021-07-25
             //transform.position + Vector3.up * 0.5f : 뒤에것을 더해주지않으면 발바닥에서 ray를 쏘지만, 더해주면 배꼽 위치에서 쏜다.
             if (Physics.Raycast(transform.position + Vector3.up * 0.5f, dir, 1.0f, LayerMask.GetMask("Block")))
             {
-                //상태는 IDLE로 바뀐다.
-                state = PlayerState.IDLE;
+                //Player가 뛰다가 건물에 부딪히면 멈춘다. 디아블로 같은 경우, 부딪혀도 계속 뛰던거 같은데, 디아블로 처럼 만들어보자, 2021-07-26
+                //마우스를 계속 누르고 있지 않는 상태라면, 2021-07-26
+                if (Input.GetMouseButton(0) == false)
+                {
+                    //Player의 기본상태를 IDLE로 한다, 2021-07-26
+                    state = PlayerState.IDLE;
+                }
 
                 return;
             }
-
             
-                //Quaternion은 rotation함수라고 봐도 된다. 객체의 rotation에 Slerp(부드럽게 rotation)을 대입, 2021-07-05
+            //Quaternion은 rotation함수라고 봐도 된다. 객체의 rotation에 Slerp(부드럽게 rotation)을 대입, 2021-07-05
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 10 * Time.deltaTime);
         }
 
         Animator anim = GetComponent<Animator>();
-        anim.SetFloat("speed", speed);
+        anim.SetFloat("speed", _stat.MoveSpeed);
     }
 
     void UpdateDIE()
     {
         //아무것도 못함
     }
-
-    void Start()
-    {
-        //Managers.Resource.Instantiate("UI/UI_Button");
-
-        //Managers.Input.KeyAction += OnKeyboard;을 호출할 때 OnKeyboard() 함수가 두 번 호출 되는것을 막기 위해서 미리 한 번 뺀다, 2021-07-01
-        Managers.Input.KeyAction -= OnKeyboard;
-
-        //키보드에 어떠한 키라도 누르면, InputManager한테 OnKeyboard라는 함수를 실행 요청, 2021-07-01
-        Managers.Input.KeyAction += OnKeyboard;
-        //이렇게 하면 Update()함수는 사용하지 않게 되고, 결국에는 키보드 입력 체크하는 것이 유일하게 된다, 2021-07-01
-
-        //Managers.Input.MouseAction += OnMouseClicked;을 호출할 때 OnMouseClicked() 함수가 두 번 호출 되는것을 막기 위해서 미리 한 번 뺀다, 2021-07-05
-        Managers.Input.MouseAction -= OnMouseClicked;
-
-        //마우스에 어떠한 키라도 누르면, InputManager한테 OnMouseClicked라는 함수를 실행 요청, 2021-07-05
-        Managers.Input.MouseAction += OnMouseClicked;
-    }
+        
 
     //Update()문은 1프레임당 호출되는 함수인데, 60프레임의 게임이 돌아가고 있다면, 60분의1초마다 포지션을 이동하는셈(=캐릭터가 빠르게 이동됨), 2021-07-01
     void Update()
     {
+        UpdateMouseCursor();            //마우스 커서 설정, 2021-07-26
+
         switch (state)
         {
             case PlayerState.IDLE:
@@ -157,7 +189,7 @@ public class PlayerController : MonoBehaviour
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(Vector3.forward), 0.5f);
 
-            transform.position += Vector3.forward * Time.deltaTime * speed;
+            transform.position += Vector3.forward * Time.deltaTime * _stat.MoveSpeed;
 
             AnimRun();
 
@@ -166,7 +198,7 @@ public class PlayerController : MonoBehaviour
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(Vector3.back), 0.5f);
 
-            transform.position += Vector3.back * Time.deltaTime * speed;
+            transform.position += Vector3.back * Time.deltaTime * _stat.MoveSpeed;
 
             AnimRun();
         }
@@ -174,7 +206,7 @@ public class PlayerController : MonoBehaviour
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(Vector3.left), 0.5f);
 
-            transform.position += Vector3.left * Time.deltaTime * speed;
+            transform.position += Vector3.left * Time.deltaTime * _stat.MoveSpeed;
 
             AnimRun();
         }
@@ -182,7 +214,7 @@ public class PlayerController : MonoBehaviour
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(Vector3.right), 0.5f);
 
-            transform.position += Vector3.right * Time.deltaTime * speed;
+            transform.position += Vector3.right * Time.deltaTime * _stat.MoveSpeed;
 
             AnimRun();
         }
@@ -191,8 +223,78 @@ public class PlayerController : MonoBehaviour
         //moveToDestination = false;
     }
 
+    //마우스 커서 이미지 변환, 2021-07-26
+    void UpdateMouseCursor()
+    {
+        //마우스를 누른 상태라면, 어떤 방식으로든, 마우스 커서 아이콘을 바꾸게 해서는 안된다, 2021-07-26
+        //마우스를 누르면. 2021-07-26
+        if (Input.GetMouseButton(0))
+        {
+            //마우스를 눌렀다면(= true라면) return, 2021-07-26
+            return;
+            //return으로 인해, 마우스로 땅을 꾹 누르고 있는 상태에서 마우스를 이동 시키다가
+            //마우스를 Enemy 위로 지나가도, 칼 모양 마우스 커서로 바뀌지 않는다, 2021-07-26
+        }
+
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        Debug.DrawRay(Camera.main.transform.position, ray.direction * 100.0f, Color.red, 1.0f);
+
+        //Unity창에 바로 접근해서 Unity의 Layer이름을 가져와서 쓰는 것, 2021-07-26
+        //LayerMask mask = LayerMask.GetMask("Ground") | LayerMask.GetMask("Monster");
+        //Define.cs의 Layer enum에 적힌 변수들을 가져와서 Layer번호를 이용하여 Layer를 설정하는 것, 2021-07-26
+        LayerMask _mask = (1 << (int)Define.Layer.Ground) | (1 << (int)Define.Layer.Monster);
+
+        RaycastHit hit;
+
+        //ray를 쏴서 mask변수에 있는 값에 닿으면, 2021-07-05
+        if (Physics.Raycast(ray, out hit, 100.0f, _mask))
+        {
+            // Q) ray가 객체에 닿는 것을 성공했다고 하면, Ground인지, Monster인지 어떻게 알까?
+            // 어떤 객체가 ray에 먼저 닿았는지 알 수 있으면 된다.
+
+            //만약 내가 클릭한 객체가 몬스터라면 ,2021-07-26
+            if (hit.collider.gameObject.layer == (int)Define.Layer.Monster)
+            {
+                //마우스 커서 이미지 깜빡거리는 버그를 고치기 위해서 enum값으로 마우스 이미지 값들을 설정하여, 이미지 갱신 최소화, 2021-07-26
+                //땅을 가리키는 마우스 이미지 커서는 이제 계속 갱신되는 것이 아니라, 평소에는 갱신되지 않지만, Enemy위에 마우스를 올릴 때만 갱신된다, 2021-07-26
+                //이렇게 하면 마우스 이미지 커서의 깜빡거림이 없어진다, 2021-07-26
+                if(_cursorType != CursorType.Attack)
+                {
+                    //커서 아이콘 박스의 (0, 0)과 커서 아이콘 칼자루 끝 부분의 좌표가 다르므로 수동으로 설정
+                    //커서 아이콘 박스의 x축을 5분의 1지점 =  커서 아이콘 칼자루 끝 부분. 그러므로 5분의 1지점으로 커서 끝부분을 정한다, 2021-07-26
+                    Cursor.SetCursor(_attackIcon, new Vector2(_attackIcon.width / 5, 0), CursorMode.Auto);
+                    
+                    //마우스 커서 이미지의 타입을 Attack으로, 2021-07-26
+                    _cursorType = CursorType.Attack;
+                }
+                
+            }
+
+            //만약 내가 클릭한 객체가 몬스터가 아니라면, 2021-07-26
+            else
+            {
+                //마우스 커서 이미지 깜빡거리는 버그를 고치기 위해서 enum값으로 마우스 이미지 값들을 설정하여, 이미지 갱신 최소화, 2021-07-26
+                //땅을 가리키는 마우스 이미지 커서는 이제 계속 갱신되는 것이 아니라, 평소에는 갱신되지 않지만, Enemy위에 마우스를 올릴 때만 갱신된다, 2021-07-26
+                //이렇게 하면 마우스 이미지 커서의 깜빡거림이 없어진다, 2021-07-26
+                if (_cursorType != CursorType.Hand)
+                {
+                    //커서 아이콘 박스의 (0, 0)과 커서 아이콘 손가락 끝 부분의 좌표가 다르므로 수동으로 설정
+                    //커서 아이콘 박스의 x축을 3분의 1지점 =  커서 아이콘 손가락 끝 부분. 그러므로 3분의 1지점으로 커서 끝부분을 정한다, 2021-07-26
+                    Cursor.SetCursor(_handIcon, new Vector2(_handIcon.width / 3, 0), CursorMode.Auto);
+
+                    //마우스 커서 이미지의 타입을 Attack으로, 2021-07-26
+                    _cursorType = CursorType.Hand;
+                }
+            }
+        }
+    }
+
+
+    GameObject _lockTarget;      //마우스로 찍어서 레이저에 맞은 객체의 콜라이더를 저장하는 변수, 2021-07-26 
+
     //Managers.Input.KeyAction과는 다르게, Managers.Input.MouseAction는 Action에다가 Define.MouseEvent를 넣어준 상태라 Define.MouseEvent evt로 인자를 받아준다, 2021-07-05
-    void OnMouseClicked(Define.MouseEvent evt)
+    void OnMouseEvent(Define.MouseEvent evt)
     {
         //클릭한 상태 뿐만 아니라, 마우스를 눌리고 있는 상태에서도 이동할 수 있게 이 부분 삭제, 2021-07-07
         //만약 Click이 아니라면, 2021-07-05
@@ -205,23 +307,86 @@ public class PlayerController : MonoBehaviour
         if (state == PlayerState.DIE)
             return;
 
+        RaycastHit hit;
+        
+        //마우스 위치에 ray를 쏘기
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
+        //ray를 시각적으로 표시하기
         Debug.DrawRay(Camera.main.transform.position, ray.direction * 100.0f, Color.red, 1.0f);
-                
-        LayerMask mask = LayerMask.GetMask("Ground");
 
-        RaycastHit hit;
+        //Unity창에 바로 접근해서 Unity의 Layer이름을 가져와서 쓰는 것, 2021-07-26
+        //LayerMask mask = LayerMask.GetMask("Ground") | LayerMask.GetMask("Monster");
+        //Define.cs의 Layer enum에 적힌 변수들을 가져와서 Layer번호를 이용하여 Layer를 설정하는 것, 2021-07-26
+        LayerMask _mask = (1 << (int)Define.Layer.Ground) | (1 << (int)Define.Layer.Monster);
 
-        //ray를 쏴서 mask변수에 있는 값에 닿으면, 2021-07-05
-        if (Physics.Raycast(ray, out hit, 100.0f, mask))
+        //ray 발동한 값을 저장
+        bool raycastHit = Physics.Raycast(ray, out hit, 100.0f, _mask);
+
+        switch(evt)
         {
-            //ray가 닿은 곳(hit.point)를 destinationPosition 변수에 넣는다, 2021-07-05
-            destinationPosition = hit.point;
-            //moveToDestination false값을 true로 바꿔준다, 2021-07-05
+            //맨 처음 마우스를 뗀 상태에서 마우스를 눌렀을 때, 2021-07-26
+            //Unity상에서 기본 제공하는 코드 Input.GetMouseButtonDown(0) 과 같다.
+            case Define.MouseEvent.PointerDown:
+                {
+                    //ray가 발동하여 Ground 혹은 Monster에 맞았다면, 2021-07-26
+                    if (raycastHit)
+                    {
+                        //ray가 닿은 곳(hit.point)를 destinationPosition 변수에 저장, 2021-07-26
+                        destinationPosition = hit.point;
 
-            //캐릭터 상태값은 MOVING, 2021-07-08
-            state = PlayerState.MOVING;
-        }
+                        //캐릭터 상태값은 MOVING, 2021-07-26
+                        state = PlayerState.MOVING;
+
+                        //만약 내가 클릭한 객체가 몬스터라면 ,2021-07-26
+                        if (hit.collider.gameObject.layer == (int)Define.Layer.Monster)
+                        {
+                            //마우스로 찍어서 레이저에 맞은 객체의 콜라이더를 _lockTarget변수에 저장, 2021-07-26 
+                            //마우스를 찍어서 레이저에 맞은 객체가 존재하니 _lockTarget은 null이 아니다, 2021-07-26
+                            _lockTarget = hit.collider.gameObject;
+                            Debug.Log("Monster Click!");
+                        }
+
+                        //만약 내가 클릭한 객체가 몬스터가 아니라면, 2021-07-26
+                        else
+                        {
+                            //마우스로 찍어서 레이저에 맞은 객체의 콜라이더를 _lockTarget변수에 저장, 2021-07-26 
+                            //마우스를 찍어서 레이저에 맞은 객체가 존재하지 않을 시, _lockTarget은 null이다, 2021-07-26
+                            _lockTarget = null;
+                            Debug.Log("Ground Click!");
+                        }
+                    }
+                }
+                break;
+
+            //마우스를 누르고 있는 동안, 2021-07-26
+            //Unity상에서 기본 제공하는 코드 Input.GetMouseButton(0) 과 같다.
+            case Define.MouseEvent.Press:
+                {
+                    //마우스를 찍어서 레이저에 맞은 객체가 존재할시,
+                    if (_lockTarget != null)
+                    {
+                        //레이저가 맞은 콜라이더의 위치를 목적지 좌표에 저장, 2021-07-26
+                        destinationPosition = _lockTarget.transform.position;
+                    }
+
+                    //else if : 마우스를 찍어서 레이저에 맞은 객체가 존재하지 않을 시, 2021-07-26
+                    //raycastHit : ray가 발동하여 Ground 혹은 Monster에 맞았다면, 2021-07-26
+                    else if (raycastHit)
+                    {                        
+                        //ray가 닿은 곳(hit.point)를 destinationPosition 변수에 저장, 2021-07-26
+                        destinationPosition = hit.point;                        
+                    }
+                }
+                break;
+
+            //마우스를 한 번이라도 누른 상태에서 누르고 있다가 마우스를 뗐을 때, 2021-07-26
+            //Unity상에서 기본 제공하는 코드 Input.GetMouseButtonUp(0) 과 같다.
+            case Define.MouseEvent.PointerUp:
+
+                //누르고 있다가 뗀 상태니까 null, 2021-07-26
+                _lockTarget = null;
+                break;
+        }        
     }
 }

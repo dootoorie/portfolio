@@ -14,8 +14,9 @@ public class InputManager	//이 스크립트는 컴포넌트로 만들지 않을 예정이므로 일반
     //Define.MouseEvent 타입의 인수만 받는 함수들을 등록할 수 있는 MouseAction 추가, 2021-07-05
     public Action<Define.MouseEvent> MouseAction = null;
 
-    bool pressed = false;       //마우스가 클릭되었는지 아닌지 판별하는 변수 ,2021-07-05
-
+    bool _pressed = false;       //마우스가 클릭되었는지 아닌지 판별하는 변수 ,2021-07-05
+    float _pressedTime = 0;      //마우스를 몇 초동안 눌렀는지. 마우스의 Click과 PointerUp을 구분하기 위해(Define.cs의 enum인 MouseEvent), 2021-07-26
+    
     //MonoBehaviour가 아닌 스크립트이므로 누군가가 직접 불러줘야하니 On을 붙여서 이름을 OnUpdate()로 하기로 한다, 2021-07-01
     public void OnUpdate()
     {
@@ -43,24 +44,42 @@ public class InputManager	//이 스크립트는 컴포넌트로 만들지 않을 예정이므로 일반
             //GetMouseButton은 마우스를 누르고 있을 때 반응, GetMouseButtonDown은 마우스를 처음 눌렀을 때 반응, 2021-07-05
             if (Input.GetMouseButton(0))
             {
+                //마우스를 한 번도 누르지 않은 상태라면, 2021-07-26
+                if(!_pressed)
+                {
+                    //마우스 상태를 Click이 아니라 PointerDown으로, 2021-07-26
+                    MouseAction.Invoke(Define.MouseEvent.PointerDown);
+
+                    //마우스를 몇 초 동안 눌렀는지는 Unity상의 시간으로, 2021-07-26
+                    _pressedTime = Time.time;
+                }
                 //Press라는 이벤트를 발생, 2021-07-05
                 MouseAction.Invoke(Define.MouseEvent.Press);
 
-                //마우스를 눌렀을 때, true, 2021-07-05
-                pressed = true;
+                //이제, 마우스를 한 번이라도 누른것이니, true, 2021-07-05
+                _pressed = true;
             }
             //마우스를 눌렀다가 뗐을 때, 2021-07-05
             else
             {
                 //마우스를 한 번이라도 눌러서 pressed가 true인 상태면, 2021-07-05
-                if (pressed)
+                if (_pressed)
                 {
-                    //Click이라는 이벤트를 발생, 2021-07-05
-                    MouseAction.Invoke(Define.MouseEvent.Click);
+                    //Unity상의 시간이 마우스를 눌리고 있었던 시간 + 0.2초보다 낮을 경우, 2021-07-26
+                    if (Time.time < _pressedTime + 0.2f)
+                    {
+                        //마우스 상태를 PointerDown이 아니라 Click으로, 2021-07-26
+                        MouseAction.Invoke(Define.MouseEvent.Click);
+                    }
+                    
+                    //Unity상의 시간이 마우스를 눌리고 있었던 시간 + 0.2초보다 높을 경우, 한참 누르고 있다가 뗀 것이니 Click이 아니라 PointUp, 2021-07-26
+                    MouseAction.Invoke(Define.MouseEvent.PointerUp);
                 }
                 //true였던 pressed는 false로 바꿔줌, 2021-07-05
-                pressed = false;
-                
+                _pressed = false;
+
+                //마우스 누른 시간 초기화, 2021-07-26
+                _pressedTime = 0f;                
             }
         }        
     }
