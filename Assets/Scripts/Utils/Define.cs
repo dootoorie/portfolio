@@ -50,6 +50,6 @@ public class Define
     // Ä«¸Ş¶ó¸ğµå, 2021-07-04
     public enum CameraMode
     {
-        QuaterView,         //ÄõÅÍºä, 2021-07-04
+        QuaterView,         //ÄõÅÍºä, 2021-07-04       
     }
 }

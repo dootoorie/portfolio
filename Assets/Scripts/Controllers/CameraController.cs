@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
-{
+{    
     //2021-07-04
     [SerializeField]
     Define.CameraMode mode = Define.CameraMode.QuaterView;
@@ -19,7 +19,7 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
-       
+
     }
 
     void LateUpdate()
