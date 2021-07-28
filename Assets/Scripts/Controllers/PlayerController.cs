@@ -45,18 +45,15 @@ public class PlayerController : MonoBehaviour
             switch (state)
             {
                 case PlayerState.DIE:
-                    anim.SetBool("attack", false);
                     break;
                 case PlayerState.IDLE:
-                    anim.SetFloat("speed", 0);
-                    anim.SetBool("attack", false);
+                    anim.CrossFade("IDLE", 0.1f);
                     break;
                 case PlayerState.MOVING:
-                    anim.SetFloat("speed", _stat.MoveSpeed);
-                    anim.SetBool("attack", false);
+                    anim.CrossFade("WALK", 0.1f);
                     break;
                 case PlayerState.SKILL:
-                    anim.SetBool("attack", true);
+                    anim.CrossFade("ATTACK", 0.1f);
                     break;
             }
         }
@@ -80,6 +77,10 @@ public class PlayerController : MonoBehaviour
 
         //마우스에 어떠한 키라도 누르면, InputManager한테 OnMouseClicked라는 함수를 실행 요청, 2021-07-05
         Managers.Input.MouseAction += OnMouseEvent;
+
+        //HPBar 만들기, 2021-07-28
+        //UI_HPBar를 만들어서 transform(= 나)에게 붙이기, 2021-07-28
+        Managers.UI.MakeWorldSpaceUI<UI_HPBar>(transform);
     }
        
 
@@ -91,7 +92,18 @@ public class PlayerController : MonoBehaviour
 
     void UpdateSKILL()
     {
-       
+        //공격할 때, Monster를 바라보는 방향이 아닌, 다른 방향을 바라보면서 떄릴 때가 있다. 이를 고치는 코드, 2021-07-28
+        //마우스를 찍어서 레이저에 맞은 객체가 존재할시, 2021-07-28
+        if (_lockTarget != null)
+        {
+            //거리(방향벡터) = 목적지 위치 - 현재 내 위치, 2021-07-28
+            Vector3 dir = _lockTarget.transform.position - transform.position;
+
+            //LockRotation의 매개변수 = 내가 바라보고 싶은 방향, 2021-07-28
+            Quaternion quat = Quaternion.LookRotation(dir);
+
+            transform.rotation = Quaternion.Lerp(transform.rotation, quat, 20 * Time.deltaTime);
+        }        
     }
 
     void UpdateMOVING()
@@ -100,6 +112,7 @@ public class PlayerController : MonoBehaviour
         if (_lockTarget != null)
         {
             //목적지 위치 = 레이저가 도달한 위치
+            //레이저가 맞은 객체의 콜라이더의 위치를 목적지 좌표에 저장,
             destinationPosition = _lockTarget.transform.position;
 
             //거리 = 목적지 위치 - 현재 내 위치, 2021-07-27
@@ -171,11 +184,39 @@ public class PlayerController : MonoBehaviour
     }   
 
     //ATTACK 애니메이션에 Event추가, 2021-07-27
+    //Enemy 체력 깎기, 2021-07-28
     void OnHitEvent()
     {
         Debug.Log("OnHitEvent");
 
-        State = PlayerState.IDLE;
+        //Enemy 체력 깎기, 2021-07-28
+        //마우스를 찍어서 레이저에 맞은 객체가 존재할시, 2021-07-28
+        if (_lockTarget != null)
+        {
+            //마우스를 찍어서 레이저에 맞은 객체의 Stat.cs 컴포넌트를 Stat을 인스턴스화 한 targetStat 변수에 저장, 2021-07-28
+            Stat targetStat = _lockTarget.GetComponent<Stat>();
+
+            //PlayerController.cs 이 스크립트를 가진 gameObject(=Player)가 가진 PlayerStat.cs 컴포넌트를 PlayerStat을 인스턴스화한 myStat 변수에 저장, 2021-07-28
+            PlayerStat myStat = gameObject.GetComponent<PlayerStat>();
+
+            //데미지 = Player 어택 수치 - 마우스로 찍은 객체의 디펜스 수치
+            //Enemy의 Defense가 너무 높아서 혹시라도 음수가 되면 안되니까
+            //Mathf.Max(0, 변수)로 미리 적의 Defense가 음수가 되는 것을 차단, 2021-07-28 
+            int damage = Mathf.Max(0, myStat.Attack - targetStat.Defense);
+
+            Debug.Log(damage);
+
+            //마우스를 찍어서 레이저에 맞은 객체의 Hp를 damage변수의 수치를 이용해서 깎기, 2021-07-28
+            targetStat.Hp -= damage;
+        }
+        if (_stopSkill)
+        {
+            State = PlayerState.IDLE;
+        }
+        else
+        {
+            State = PlayerState.SKILL;
+        }
     }
 
     //Update()문은 1프레임당 호출되는 함수인데, 60프레임의 게임이 돌아가고 있다면, 60분의1초마다 포지션을 이동하는셈(=캐릭터가 빠르게 이동됨), 2021-07-01
@@ -251,22 +292,38 @@ public class PlayerController : MonoBehaviour
         //moveToDestination = false;
     }
 
+    bool _stopSkill = false;
+
     //Managers.Input.KeyAction과는 다르게, Managers.Input.MouseAction는 Action에다가 Define.MouseEvent를 넣어준 상태라 Define.MouseEvent evt로 인자를 받아준다, 2021-07-05
     void OnMouseEvent(Define.MouseEvent evt)
     {
-        //클릭한 상태 뿐만 아니라, 마우스를 눌리고 있는 상태에서도 이동할 수 있게 이 부분 삭제, 2021-07-07
-        //만약 Click이 아니라면, 2021-07-05
-        //if (evt != Define.MouseEvent.Click)
-        //{
-        //    return;
-        //}
+        switch (State)
+        {
+            case PlayerState.IDLE:
+                OnMouseEvent_IDLERUN(evt);
+                break;
+            case PlayerState.MOVING:
+                OnMouseEvent_IDLERUN(evt);
+                break;
+            case PlayerState.SKILL:
+                {
+                    if (evt == Define.MouseEvent.PointerUp)
+                    {
+                        _stopSkill = true;
+                    }
+                }
+                break;
+        }
+    }
 
-        //만약 캐릭터 상태가 DIE이면, 반환한다, 2021-07-08
-        if (State == PlayerState.DIE)
-            return;
-
+    //OnMouseEvent() 함수에 있던 코드들을 여기로 옮겼다.
+    //이유 : OnMouseEnvet() 함수에서는 IDLE과 WALK에만 쓸려고 했는데,
+    //       스킬을 쓸 때에도 OnMouseEvent가 실행 될 수 있기에
+    //       OnMouseEvent_IDLERUN함수를 따로 파줬다, 2021-07-27
+    void OnMouseEvent_IDLERUN(Define.MouseEvent evt)
+    {
         RaycastHit hit;
-        
+
         //마우스 위치에 ray를 쏘기
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
@@ -281,7 +338,7 @@ public class PlayerController : MonoBehaviour
         //ray 발동한 값을 저장
         bool raycastHit = Physics.Raycast(ray, out hit, 100.0f, _mask);
 
-        switch(evt)
+        switch (evt)
         {
             //맨 처음 마우스를 뗀 상태에서 마우스를 눌렀을 때, 2021-07-26
             //Unity상에서 기본 제공하는 코드 Input.GetMouseButtonDown(0) 과 같다.
@@ -295,6 +352,9 @@ public class PlayerController : MonoBehaviour
 
                         //캐릭터 상태값은 MOVING, 2021-07-26
                         State = PlayerState.MOVING;
+
+                        //Enemy를 클릭 시, 공격을 한 번하고 Player가 멈추는 버그 현상을 고치기 위해 2021-07-27
+                        _stopSkill = false;
 
                         //만약 내가 클릭한 객체가 몬스터라면 ,2021-07-26
                         if (hit.collider.gameObject.layer == (int)Define.Layer.Monster)
@@ -320,23 +380,21 @@ public class PlayerController : MonoBehaviour
             //마우스를 누르고 있는 동안, 2021-07-26
             //Unity상에서 기본 제공하는 코드 Input.GetMouseButton(0) 과 같다.
             case Define.MouseEvent.Press:
-                {
-                    //마우스를 찍어서 레이저에 맞은 객체가 존재할시,
-                    if (_lockTarget != null)
-                    {
-                        //레이저가 맞은 콜라이더의 위치를 목적지 좌표에 저장, 2021-07-26
-                        destinationPosition = _lockTarget.transform.position;
-                    }
-
-                    //else if : 마우스를 찍어서 레이저에 맞은 객체가 존재하지 않을 시, 2021-07-26
+                {                    
+                    //_lockTarget == null : 마우스를 찍어서 레이저에 맞은 객체가 존재하지 않을시,                    
                     //raycastHit : ray가 발동하여 Ground 혹은 Monster에 맞았다면, 2021-07-26
-                    else if (raycastHit)
-                    {                        
+                    if (_lockTarget == null && raycastHit)
+                    {
                         //ray가 닿은 곳(hit.point)를 destinationPosition 변수에 저장, 2021-07-26
-                        destinationPosition = hit.point;                        
+                        destinationPosition = hit.point;
                     }
                 }
                 break;
-        }        
+
+            //Enemy를 클릭 시, 공격을 한 번하고 Player가 멈추는 버그 현상을 고치기 위해 2021-07-27
+            case Define.MouseEvent.PointerUp:
+                _stopSkill = true;
+                break;
+        }
     }
 }

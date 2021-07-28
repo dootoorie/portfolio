@@ -62,6 +62,38 @@ public class UIManager //MonoBehaviour 지워준다
         }
     }
 
+    //UI_HPBar 만들기, 2021-07-28
+    public T MakeWorldSpaceUI<T>(Transform parent = null, string name = null) where T : UI_Base
+    {
+        //만약 name을 받지 않았다면,
+        if (string.IsNullOrEmpty(name))
+        {
+            //<T>와 똑같은 이름을 사용하겠다는 뜻
+            name = typeof(T).Name;
+        }
+
+        //프리팹 만들기 : UI폴더/WorldSpace/
+        GameObject go = Managers.Resource.Instantiate($"UI/WorldSpace/{name}");
+
+        if (parent != null)
+        {
+            go.transform.SetParent(parent);
+        }
+
+        //Resources/Prefabs/WorldSpace/UI_HPBar프리팹에
+        //메인카메라가 붙어있지 않은 상황에서 동적으로 붙이고 싶을 때, 코드로 제어, 2021-07-28
+        //Canvas 컴포넌트를 인스턴스화 한 변수에 저장
+        Canvas canvas = go.GetOrAddComponent<Canvas>();
+
+        //renderMode를 WorldSpace로 설정
+        canvas.renderMode = RenderMode.WorldSpace;
+
+        //EventCamera를 메인카메라로 설정
+        canvas.worldCamera = Camera.main;
+        
+        return Util.GetOrAddComponent<T>(go);
+    }
+
     //아이템 만들기, 2021-07-19
     public T MakeSubItem<T>(Transform parent = null, string name = null) where T : UI_Base
     {

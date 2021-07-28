@@ -9,11 +9,7 @@ public class UI_Inven : UI_Scene
     enum GameObjects
     {
         GridPanel
-    }
-    void Start()
-    {
-        Init();
-    }
+    }   
 
     public override void Init()
     {

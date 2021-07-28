@@ -13,6 +13,12 @@ public abstract class UI_Base : MonoBehaviour
     //2021-07-19
     public abstract void Init();
 
+    //최상위 부모에게 Start(){ Init(); }을 넣어주고, 자식들은 모두 Start(){ Init(); }을 제거하자, 2021-07-28
+    private void Start()
+    {
+        Init();
+    }
+
     //Generic <T>
     //enum 값 가져오기 : reflection(리플렉션)을 이용
     protected void Bind<T>(Type type) where T : UnityEngine.Object

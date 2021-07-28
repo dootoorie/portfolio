@@ -11,12 +11,7 @@ public class UI_Inven_Item : UI_Base        //독립적으로 뜨는 팝업도 아니고, 하�
         ItemNameText,
     }
 
-    string _name;
-
-    void Start()
-    {
-        Init();
-    }
+    string _name;        
 
     public override void Init()
     {
