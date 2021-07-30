@@ -19,6 +19,21 @@ public class Managers : MonoBehaviour
         } 
     }
 
+    //Contents폴더
+
+    //새로 만든 GameManager.cs 추가하여 인스턴스화, 2021-07-29
+    GameManager _game = new GameManager();
+
+    public static GameManager Game
+    {
+        get
+        {
+            return Instance._game;
+        }
+    }
+
+    //Core폴더
+
     //새로 만든 DataManager.cs 추가하여 인스턴스화, 2021-07-23
     DataManager _data = new DataManager();
 
@@ -126,7 +141,7 @@ public class Managers : MonoBehaviour
         //= : 오른쪽 코드를 왼쪽 코드에 넣기
         //Instance = gameobject.GetComponent<Managers>();        
         
-        //, 2021 - 06 - 30
+        //, 2021-06-30
         Init();        
     }
 

@@ -35,4 +35,38 @@ public class Stat : MonoBehaviour
         _defense = 5;
         _moveSpeed = 5.0f;
     }
+
+    //attack 능력치를 바로 받지 않고 attacker로 한 이유는,
+    //player인지, monster인지, 다른 정보도 추출하게 될 수도 있기 때문에, 2021-07-30
+    public virtual void OnAttacked(Stat attacker)
+    {
+        //데미지 = Player 어택 수치 - 마우스로 찍은 객체의 디펜스 수치
+        //Enemy의 Defense가 너무 높아서 혹시라도 음수가 되면 안되니까
+        //Mathf.Max(0, 변수)로 미리 적의 Defense가 음수가 되는 것을 차단, 2021-07-30
+        int damage = Mathf.Max(0, attacker.Attack - Defense);
+
+        //Hp를 damage변수의 수치를 이용해서 깎기, 2021-07-30
+        Hp -= damage;
+
+        //hp가 0이 되면 안되니까 사전에 차단, 2021-07-30
+        if (Hp <= 0)
+        {
+            Hp = 0;
+
+            OnDead(attacker);
+        }               
+    }
+
+    //2021-07-30
+    protected virtual void OnDead(Stat attacker)
+    {
+        PlayerStat playerStat = attacker as PlayerStat;
+
+        if (playerStat != null)
+        {
+            playerStat.Exp += 15;
+        }              
+
+        Managers.Game.Despawn(gameObject);
+    }
 }

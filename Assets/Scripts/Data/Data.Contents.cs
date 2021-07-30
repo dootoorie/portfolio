@@ -12,8 +12,10 @@ namespace Data
     public class Stat
     {
         public int level;
-        public int hp;
+        public int maxHp;
         public int attack;
+        public int defense;
+        public int totalExp;
     }
 
     [Serializable]      //메모리에서 들고있는 것을 파일로 변환할 수 있는 기능

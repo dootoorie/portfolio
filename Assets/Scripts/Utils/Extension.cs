@@ -16,4 +16,10 @@ public static class Extension   //MonoBehaviour Á¦°Å
     {
         UI_Base.BindEvent(go, action, type);
     }
+
+    //2021-07-30
+    public static bool IsValid(this GameObject go)
+    {
+        return go != null && go.activeSelf;
+    }
 }

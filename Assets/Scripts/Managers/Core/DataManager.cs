@@ -20,9 +20,10 @@ public class DataManager  //MonoBehaviour 삭제
 
     public void Init()
     {
-        //StatData : Key타입과 Value타입 전체를 들고있는 클래스
+        //Json파일을 파싱 한 후, Dictionary StatDict에 넣기
+        //Data.StatData : Key타입과 Value타입 전체를 들고있는 StatData 클래스(위치 : Data.Contents.cs 스크립트의 네임스페이스 Data의 StatData 클래스)
         //int : Key 타입
-        //Stat : Value 타입
+        //Data.Stat : Value 타입 (위치 : Data 네임스페이스의 Stat 클래스)
         StatDict = LoadJson<Data.StatData, int, Data.Stat>("StatData").MakeDict();
     }
 

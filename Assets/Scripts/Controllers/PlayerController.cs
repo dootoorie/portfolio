@@ -3,64 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : BaseController
 {
-    public enum PlayerState
-    {
-        IDLE,
-        MOVING,
-        DIE,
-        JUMPING,
-        CHANNELING,                     //손을 들고 마법을 쓰고 있는 상태
-        FALLING,
-        SKILL
-    }
-
     PlayerStat _stat;                   //PlayerStat.cs의 PlayerStat 클래스를 변수로 인스턴스화, 2021-07-26
 
-    Vector3 destinationPosition;        //player의 목적지 위치, 2021-07-05       
-    
-    GameObject _lockTarget;      //마우스로 찍어서 레이저에 맞은 객체의 콜라이더를 저장하는 변수, 2021-07-26 
+    bool _stopSkill = false;
 
-    [SerializeField]
-    PlayerState state = PlayerState.IDLE;
-
-    //이제부터 state로 바로 접근하는 것이 아니라, 프로퍼티 State로 접근한다
-    // - PlayerState
-    // - anim
-    //이 두 마리의 토끼를 다 잡으려면 프로퍼티 사용, 2021-07-27
-    public PlayerState State
+    public override void Init()
     {
-        get
-        {
-            return state;
-        }
+        //Init()을 하자마자, 바로 자기의 Type부터 정해주고 시작, 2021-07-30
+        WorldObjectType = Define.WorldObject.Player;
 
-        set
-        {
-            state = value;
-
-            Animator anim = GetComponent<Animator>();
-
-            switch (state)
-            {
-                case PlayerState.DIE:
-                    break;
-                case PlayerState.IDLE:
-                    anim.CrossFade("IDLE", 0.1f);
-                    break;
-                case PlayerState.MOVING:
-                    anim.CrossFade("WALK", 0.1f);
-                    break;
-                case PlayerState.SKILL:
-                    anim.CrossFade("ATTACK", 0.1f);
-                    break;
-            }
-        }
-    }
-    void Start()
-    {
-        //PlayerStat.cs의 PlayerStat클래스를 변수로 인스턴스화 한 _stat 에다가 PlayerStat.cs 컴포넌트를 붙인다, 2021-07-26
+        //지금 현재 이 스크립트 PlayerController.cs를 컴포넌트로 가지고 있는 gameObject에 PlayerStat.cs를 컴포넌트로 추가한 후, _stat 변수에 저장, 2021-07-26
         _stat = gameObject.GetComponent<PlayerStat>();
 
         //Managers.Resource.Instantiate("UI/UI_Button");
@@ -78,19 +32,16 @@ public class PlayerController : MonoBehaviour
         //마우스에 어떠한 키라도 누르면, InputManager한테 OnMouseClicked라는 함수를 실행 요청, 2021-07-05
         Managers.Input.MouseAction += OnMouseEvent;
 
-        //HPBar 만들기, 2021-07-28
-        //UI_HPBar를 만들어서 transform(= 나)에게 붙이기, 2021-07-28
-        Managers.UI.MakeWorldSpaceUI<UI_HPBar>(transform);
-    }
-       
-
-    void UpdateIDLE()
-    {
-
+        //만약 HPBar가 없으면,
+        if (gameObject.GetComponentInChildren<UI_HPBar>() == null)
+        {
+            //HPBar 만들기, 2021-07-28
+            //UI_HPBar를 만들어서 transform(= 나)에게 붙이기, 2021-07-28
+            Managers.UI.MakeWorldSpaceUI<UI_HPBar>(transform);
+        }            
     }
 
-
-    void UpdateSKILL()
+    protected override void UpdateSKILL()
     {
         //공격할 때, Monster를 바라보는 방향이 아닌, 다른 방향을 바라보면서 떄릴 때가 있다. 이를 고치는 코드, 2021-07-28
         //마우스를 찍어서 레이저에 맞은 객체가 존재할시, 2021-07-28
@@ -106,7 +57,7 @@ public class PlayerController : MonoBehaviour
         }        
     }
 
-    void UpdateMOVING()
+    protected override void UpdateMOVING()
     {
         //마우스를 찍어서 레이저에 맞은 객체가 존재할시, 2021-07-27        
         if (_lockTarget != null)
@@ -123,7 +74,7 @@ public class PlayerController : MonoBehaviour
             if (distance <= 1)
             {
                 //공격, 2021-07-27
-                State = PlayerState.SKILL;
+                State = Define.State.SKILL;
                 
                 return;
             }
@@ -135,25 +86,12 @@ public class PlayerController : MonoBehaviour
         //아주 작은값으로 도착했는지 안 했는지 확인, 이 코드를 쓴 이유는 '방향 벡터 = 목적지 위치 - 현재 내 위치'를 해도 정확히 0이 나오지 않는 경우가 많다.(오차가 항상 있다) 2021-07-05
         if (dir.magnitude < 0.1f)
         {           
-            State = PlayerState.IDLE;
+            State = Define.State.IDLE;
         }
 
         //else이면, 아직 도착하지 않았다는 뜻, 2021-07-05
         else
         {
-            //NavMeshAgent를 변수로 인스턴스화 한 후, NavMeshAgent 컴포넌트를 부착하기, 2021-07-25
-            NavMeshAgent nma = gameObject.GetOrAddComponent<NavMeshAgent>();
-            
-            //이동하는 값(speed * Time.deltaTime)이, 현재 이동해야 할 남은 거리(dir.magnitude <0.0001f)보다 작아야 한다는 것을 보장 해줘야 함, 2021-07-05
-            //Clamp를 쓰면 최소값과 최대값 범위를 지정할 수 있다. 그래서 이동하는 값이 0(최소값) ~ 이동해야 할 남은 거리(최대값) 만큼의 범위로 정하였다, 2021-07-05
-            float moveDist = Mathf.Clamp(_stat.MoveSpeed * Time.deltaTime, 0, dir.magnitude);
-
-            //NavMeshAgent를 이용해서 이동, 2021-07-25
-            nma.Move(dir.normalized * moveDist);
-
-            //player가 이동할 때, 크기가 1로 정규화한 방향벡터에 이동속도를 곱한 값. 2021-07-05
-            //transform.position = transform.position + dir.normalized * moveDist;
-
             //ray를 시각적으로 나타내기, 2021-07-25
             Debug.DrawRay(transform.position + Vector3.up * 0.5f, dir.normalized, Color.red);
             
@@ -167,27 +105,29 @@ public class PlayerController : MonoBehaviour
                 if (Input.GetMouseButton(0) == false)
                 {
                     //Player의 기본상태를 IDLE로 한다, 2021-07-26
-                    State = PlayerState.IDLE;
+                    State = Define.State.IDLE;
                 }
 
                 return;
             }
-            
+
+            //이동하는 값(speed * Time.deltaTime)이, 현재 이동해야 할 남은 거리(dir.magnitude <0.0001f)보다 작아야 한다는 것을 보장 해줘야 함, 2021-07-05
+            //Clamp를 쓰면 최소값과 최대값 범위를 지정할 수 있다. 그래서 이동하는 값이 0(최소값) ~ 이동해야 할 남은 거리(최대값) 만큼의 범위로 정하였다, 2021-07-05
+            float moveDist = Mathf.Clamp(_stat.MoveSpeed * Time.deltaTime, 0, dir.magnitude);
+
+            //Player가 Monster와 충돌로 인해, Monste가 밀려나고, Monster를 뚫고 지나가지 못해서, NavMeshAgent를 지우고 이걸로 대체, 2021-07-29
+            transform.position += dir.normalized * moveDist;
+
             //Quaternion은 rotation함수라고 봐도 된다. 객체의 rotation에 Slerp(부드럽게 rotation)을 대입, 2021-07-05
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 10 * Time.deltaTime);
         }        
     }
 
-    void UpdateDIE()
-    {
-        //아무것도 못함
-    }   
-
     //ATTACK 애니메이션에 Event추가, 2021-07-27
     //Enemy 체력 깎기, 2021-07-28
     void OnHitEvent()
     {
-        Debug.Log("OnHitEvent");
+        Debug.Log("Player OnHitEvent()");
 
         //Enemy 체력 깎기, 2021-07-28
         //마우스를 찍어서 레이저에 맞은 객체가 존재할시, 2021-07-28
@@ -196,55 +136,19 @@ public class PlayerController : MonoBehaviour
             //마우스를 찍어서 레이저에 맞은 객체의 Stat.cs 컴포넌트를 Stat을 인스턴스화 한 targetStat 변수에 저장, 2021-07-28
             Stat targetStat = _lockTarget.GetComponent<Stat>();
 
-            //PlayerController.cs 이 스크립트를 가진 gameObject(=Player)가 가진 PlayerStat.cs 컴포넌트를 PlayerStat을 인스턴스화한 myStat 변수에 저장, 2021-07-28
-            PlayerStat myStat = gameObject.GetComponent<PlayerStat>();
-
-            //데미지 = Player 어택 수치 - 마우스로 찍은 객체의 디펜스 수치
-            //Enemy의 Defense가 너무 높아서 혹시라도 음수가 되면 안되니까
-            //Mathf.Max(0, 변수)로 미리 적의 Defense가 음수가 되는 것을 차단, 2021-07-28 
-            int damage = Mathf.Max(0, myStat.Attack - targetStat.Defense);
-
-            Debug.Log(damage);
-
-            //마우스를 찍어서 레이저에 맞은 객체의 Hp를 damage변수의 수치를 이용해서 깎기, 2021-07-28
-            targetStat.Hp -= damage;
+            //damage를 받아서 hp감소, 2021-07-30
+            targetStat.OnAttacked(_stat);
         }
         if (_stopSkill)
         {
-            State = PlayerState.IDLE;
+            State = Define.State.IDLE;
         }
         else
         {
-            State = PlayerState.SKILL;
+            State = Define.State.SKILL;
         }
     }
-
-    //Update()문은 1프레임당 호출되는 함수인데, 60프레임의 게임이 돌아가고 있다면, 60분의1초마다 포지션을 이동하는셈(=캐릭터가 빠르게 이동됨), 2021-07-01
-    void Update()
-    {
-        switch (state)
-        {
-            case PlayerState.IDLE:
-                UpdateIDLE();
-                break;
-                
-            case PlayerState.MOVING:
-                UpdateMOVING();
-                break;
-                
-            case PlayerState.DIE:
-                UpdateDIE();
-                break;
-
-            case PlayerState.SKILL:
-                UpdateSKILL();
-                break;
-                
-        }
-        //Update()함수에 키보드를 체크하면, 그 숫자가 많아지면, 어디서 키보드 입력을 받았는지 체크하기 어려운 부분이 있다.
-        //하지만 KeyAction으로 받으면, KeyAction.Invoke(); 에 중단점을 걸어서, 누가 이벤트를 받는지, 누가 실행이 되는지도 알 수 있다, 2021-07-01
-    }
-
+    
     void AnimRun()
     {
         //Animator를 인스턴스화 하여 추가, 2021-07-07
@@ -292,20 +196,18 @@ public class PlayerController : MonoBehaviour
         //moveToDestination = false;
     }
 
-    bool _stopSkill = false;
-
     //Managers.Input.KeyAction과는 다르게, Managers.Input.MouseAction는 Action에다가 Define.MouseEvent를 넣어준 상태라 Define.MouseEvent evt로 인자를 받아준다, 2021-07-05
     void OnMouseEvent(Define.MouseEvent evt)
     {
         switch (State)
         {
-            case PlayerState.IDLE:
+            case Define.State.IDLE:
                 OnMouseEvent_IDLERUN(evt);
                 break;
-            case PlayerState.MOVING:
+            case Define.State.MOVING:
                 OnMouseEvent_IDLERUN(evt);
                 break;
-            case PlayerState.SKILL:
+            case Define.State.SKILL:
                 {
                     if (evt == Define.MouseEvent.PointerUp)
                     {
@@ -351,7 +253,7 @@ public class PlayerController : MonoBehaviour
                         destinationPosition = hit.point;
 
                         //캐릭터 상태값은 MOVING, 2021-07-26
-                        State = PlayerState.MOVING;
+                        State = Define.State.MOVING;
 
                         //Enemy를 클릭 시, 공격을 한 번하고 Player가 멈추는 버그 현상을 고치기 위해 2021-07-27
                         _stopSkill = false;

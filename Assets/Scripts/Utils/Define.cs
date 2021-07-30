@@ -4,6 +4,26 @@ using UnityEngine;
 
 public class Define
 {
+    //Spwan, 2021-07-30
+    public enum WorldObject
+    {
+        Unknown,
+        Player,
+        Monster,
+    }
+
+    //Player. Monster 등 공용 상태, 2021-07-29
+    public enum State
+    {
+        IDLE,
+        MOVING,
+        DIE,
+        JUMPING,
+        CHANNELING,                     //손을 들고 마법을 쓰고 있는 상태
+        FALLING,
+        SKILL
+    }
+
     // Layer번호, 2021-07-26
     public enum Layer
     {
