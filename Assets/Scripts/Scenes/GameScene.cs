@@ -27,7 +27,15 @@ public class GameScene : BaseScene
         Camera.main.gameObject.GetOrAddComponent<CameraController>().SetPlayer(player);
 
         //Monster 스폰, 2021-07-30
-        Managers.Game.Spawn(Define.WorldObject.Monster, "Zombie");
+        //Managers.Game.Spawn(Define.WorldObject.Monster, "Zombie");
+
+        //Monster 스폰, 2021-07-31
+        GameObject go = new GameObject { name = "SpawningPool" };
+
+        SpawningPool pool = go.GetOrAddComponent<SpawningPool>();
+
+        //몬스터 갯수가 5마리가 생성 될 때까지 계속 스포닝풀에서 스포닝을 한다, 2021-07-31
+        pool.SetKeepMonsterCount(5);
     }
 
     public override void Clear()

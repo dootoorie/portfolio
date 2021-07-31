@@ -83,6 +83,9 @@ public class PlayerController : BaseController
         //방향 벡터 = 목적지 위치 - 현재 내 위치
         Vector3 dir = destinationPosition - transform.position;
 
+        //Player가 Monster 위로 가끔 이동하는 버그를 차단하기 위해 y=0 으로 설정, 2021-07-31
+        dir.y = 0;
+
         //아주 작은값으로 도착했는지 안 했는지 확인, 이 코드를 쓴 이유는 '방향 벡터 = 목적지 위치 - 현재 내 위치'를 해도 정확히 0이 나오지 않는 경우가 많다.(오차가 항상 있다) 2021-07-05
         if (dir.magnitude < 0.1f)
         {           
@@ -153,6 +156,8 @@ public class PlayerController : BaseController
     {
         //Animator를 인스턴스화 하여 추가, 2021-07-07
         Animator anim = GetComponent<Animator>();
+
+        State = Define.State.MOVING;
     }
 
     //, 2021-07-01
@@ -167,6 +172,7 @@ public class PlayerController : BaseController
             AnimRun();
 
         }
+
         if (Input.GetKey(KeyCode.S))
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(Vector3.back), 0.5f);
@@ -175,6 +181,7 @@ public class PlayerController : BaseController
 
             AnimRun();
         }
+
         if (Input.GetKey(KeyCode.A))
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(Vector3.left), 0.5f);
@@ -183,6 +190,7 @@ public class PlayerController : BaseController
 
             AnimRun();
         }
+
         if (Input.GetKey(KeyCode.D))
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(Vector3.right), 0.5f);

@@ -64,7 +64,7 @@ public class Stat : MonoBehaviour
 
         if (playerStat != null)
         {
-            playerStat.Exp += 15;
+            playerStat.Exp += 5;
         }              
 
         Managers.Game.Despawn(gameObject);

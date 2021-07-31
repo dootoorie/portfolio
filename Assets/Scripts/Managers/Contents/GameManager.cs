@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,6 +19,9 @@ public class GameManager    //MonoBehaviour 삭제
     //지금은 서버와 연동하지 않으므로 int를 없앤 HashSet을 쓰자(Dictionary와 비슷), 2021-07-30
     HashSet<GameObject> _monsters = new HashSet<GameObject>();
 
+    //2021-07-31
+    public Action<int> OnSpawnEvent;
+
     //2021-07-30
     public GameObject GetPlayer() 
     {
@@ -32,8 +36,18 @@ public class GameManager    //MonoBehaviour 삭제
         switch(type)
         {
             case Define.WorldObject.Monster:
-                _monsters.Add(go);
+                {
+                    _monsters.Add(go);
+
+                    //몬스터가 추가 될 때 null이 아니면, 2021-07-31
+                    if (OnSpawnEvent != null)
+                    {
+                        //몬스터가 추가 될 때 +1, 2021-07-31
+                        OnSpawnEvent.Invoke(1);
+                    }
+                }                
                 break;
+
             case Define.WorldObject.Player:
                 _player = go;
                 break;
@@ -65,6 +79,13 @@ public class GameManager    //MonoBehaviour 삭제
                     if (_monsters.Contains(go))
                     {
                         _monsters.Remove(go);
+
+                        //몬스터가 삭제 될 때 null이 아니면, 2021-07-31
+                        if (OnSpawnEvent != null)
+                        {
+                            //몬스터가 삭제 될 때 +1
+                            OnSpawnEvent.Invoke(-1);
+                        }
                     }
                 }
                 break;

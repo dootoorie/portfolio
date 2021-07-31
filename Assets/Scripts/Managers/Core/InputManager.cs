@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 
 public class InputManager	//이 스크립트는 컴포넌트로 만들지 않을 예정이므로 일반 C# 스크립트로 한다, 2021-07-01
 {
+    //리스너 패턴
     //Action은 일종의 delegate, 2021-07-01
     //키보드와 관련된 Action, 2021-07-01
     public Action KeyAction = null;
