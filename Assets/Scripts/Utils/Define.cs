@@ -72,4 +72,9 @@ public class Define
     {
         QuaterView,         //ƒı≈Õ∫‰, 2021-07-04       
     }
+
+    public enum  CinemaChineMode
+    {
+        FreeLook,
+    }
 }

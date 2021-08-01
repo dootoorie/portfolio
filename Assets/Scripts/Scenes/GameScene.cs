@@ -26,6 +26,12 @@ public class GameScene : BaseScene
         //Player 스폰시, 카메라 세팅, 2021-07-30
         Camera.main.gameObject.GetOrAddComponent<CameraController>().SetPlayer(player);
 
+        //Transform player2 = transform.Find("ClazyRunner");
+
+        //FreeLookController free = new FreeLookController();
+
+        //free.gameObject.GetOrAddComponent<FreeLookController>().SetPlayer(player2);
+
         //Monster 스폰, 2021-07-30
         //Managers.Game.Spawn(Define.WorldObject.Monster, "Zombie");
 
@@ -36,6 +42,7 @@ public class GameScene : BaseScene
 
         //몬스터 갯수가 5마리가 생성 될 때까지 계속 스포닝풀에서 스포닝을 한다, 2021-07-31
         pool.SetKeepMonsterCount(5);
+                
     }
 
     public override void Clear()
